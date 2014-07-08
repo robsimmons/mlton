@@ -32,6 +32,7 @@ in
       ../config/seqindex/seqindex-$(SEQINDEX_INT).sml
       $(LIB_MLTON_DIR)/targets/$(TARGET)/sml/c-types.sml
    end end
+   ../integer/int-inf0.sig
    ../integer/int-inf0.sml
    local
       local 
