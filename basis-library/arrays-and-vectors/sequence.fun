@@ -10,55 +10,10 @@
 structure SeqIndex =
    struct
       open SeqIndex
-
-      local
-         structure S =
-            Int_ChooseInt
-            (type 'a t = 'a -> int
-             val fInt8 = SeqIndex.sextdFromInt8
-             val fInt16 = SeqIndex.sextdFromInt16
-             val fInt32 = SeqIndex.sextdFromInt32
-             val fInt64 = SeqIndex.sextdFromInt64
-             val fIntInf = SeqIndex.sextdFromIntInf)
-      in
-         val fromIntUnsafe = S.f
-      end
-      local
-         structure S =
-            Int_ChooseInt
-            (type 'a t = 'a -> int
-             val fInt8 = SeqIndex.schckFromInt8
-             val fInt16 = SeqIndex.schckFromInt16
-             val fInt32 = SeqIndex.schckFromInt32
-             val fInt64 = SeqIndex.schckFromInt64
-             val fIntInf = SeqIndex.schckFromIntInf)
-      in
-         val fromInt = S.f
-      end
-      local
-         structure S =
-            Int_ChooseInt
-            (type 'a t = int -> 'a
-             val fInt8 = SeqIndex.sextdToInt8
-             val fInt16 = SeqIndex.sextdToInt16
-             val fInt32 = SeqIndex.sextdToInt32
-             val fInt64 = SeqIndex.sextdToInt64
-             val fIntInf = SeqIndex.sextdToIntInf)
-      in
-         val toIntUnsafe = S.f
-      end
-      local
-         structure S =
-            Int_ChooseInt
-            (type 'a t = int -> 'a
-             val fInt8 = SeqIndex.schckToInt8
-             val fInt16 = SeqIndex.schckToInt16
-             val fInt32 = SeqIndex.schckToInt32
-             val fInt64 = SeqIndex.schckToInt64
-             val fIntInf = SeqIndex.schckToIntInf)
-      in
-         val toInt = S.f
-      end
+      val fromIntUnsafe = SeqIndex.sextdFromInt
+      val fromInt = SeqIndex.schckFromInt
+      val toIntUnsafe = SeqIndex.sextdToInt
+      val toInt = SeqIndex.schckToInt
    end
 
 functor Sequence (S: PRIM_SEQUENCE): SEQUENCE =
@@ -73,14 +28,20 @@ functor Sequence (S: PRIM_SEQUENCE): SEQUENCE =
       (* fun wrap1 f = fn (i) => f (SeqIndex.toIntUnsafe i) *)
       fun wrap2 f = fn (i, x) => f (SeqIndex.toIntUnsafe i, x)
       fun wrap3 f = fn (i, x, y) => f (SeqIndex.toIntUnsafe i, x, y)
-      fun unwrap1 f = fn (i) => f (SeqIndex.fromIntUnsafe i)
-      fun unwrap2 f = fn (i, x) => f (SeqIndex.fromIntUnsafe i, x)
+      fun unwrap1 f = fn (i) => f (SeqIndex.fromInt i)
+      fun unwrap2 f = fn (i, x) => f (SeqIndex.fromInt i, x)
 
       type 'a sequence = 'a S.sequence
       type 'a elt = 'a S.elt
 
-      (* S.maxLen must be representable as an Int.int already *)
-      val maxLen = SeqIndex.toInt S.maxLen
+      val maxLen =
+         case Int.maxInt of 
+            NONE => SeqIndex.toInt SeqIndex.maxInt'
+          | SOME maxInt =>
+               if Primitive.Int32.>= (valOf SeqIndex.precision, 
+                                      valOf Int.precision)
+                  then maxInt (* SeqIndex larger *)
+               else SeqIndex.toInt (valOf SeqIndex.maxInt) (* Int larger *)
 
       fun fromIntForLength n =
          if Primitive.Controls.safe
@@ -102,7 +63,7 @@ functor Sequence (S: PRIM_SEQUENCE): SEQUENCE =
             {done = done,
              sub = unwrap1 sub,
              update = unwrap2 update}
-         end
+         end handle Overflow => raise Fail "Sequence.generate"
 
       fun unfoldi (n, b, f) = S.unfoldi (fromIntForLength n, b, wrap2 f)
       fun unfold (n, b, f) = S.unfold (fromIntForLength n, b, f)
@@ -188,20 +149,25 @@ functor Sequence (S: PRIM_SEQUENCE): SEQUENCE =
                end
             val isEmpty = S.Slice.isEmpty
             val getItem = S.Slice.getItem
-            fun foldli f b sl = S.Slice.foldli (wrap3 f) b sl
-            fun foldri f b sl = S.Slice.foldri (wrap3 f) b sl
+            fun foldli f b sl = 
+               (ignore (length sl); S.Slice.foldli (wrap3 f) b sl)
+            fun foldri f b sl = 
+               (ignore (length sl); S.Slice.foldri (wrap3 f) b sl)
             val foldl = S.Slice.foldl
             val foldr = S.Slice.foldr
-            fun appi f sl = S.Slice.appi (wrap2 f) sl
+            fun appi f sl = (ignore (length sl); S.Slice.appi (wrap2 f) sl)
             val app = S.Slice.app
-            fun mapi f sl = S.Slice.mapi (wrap2 f) sl
+            fun mapi f sl = (ignore (length sl); S.Slice.mapi (wrap2 f) sl)
             val map = S.Slice.map
             fun findi p sl = 
-               Option.map (wrap2 (fn z => z)) (S.Slice.findi (wrap2 p) sl)
+               (ignore (length sl);
+                Option.map (wrap2 (fn z => z)) (S.Slice.findi (wrap2 p) sl))
             val find = S.Slice.find
-            fun existsi p sl = S.Slice.existsi (wrap2 p) sl
+            fun existsi p sl = 
+               (ignore (length sl); S.Slice.existsi (wrap2 p) sl)
             val exists = S.Slice.exists
-            fun alli p sl = S.Slice.alli (wrap2 p) sl
+            fun alli p sl = 
+               (ignore (length sl); S.Slice.alli (wrap2 p) sl)
             val all = S.Slice.all
             val collate = S.Slice.collate
             val sequence = S.Slice.sequence

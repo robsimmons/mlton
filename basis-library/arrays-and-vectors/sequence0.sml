@@ -37,31 +37,7 @@ functor PrimSequence (S: sig
       type 'a sequence = 'a S.sequence
       type 'a elt = 'a S.elt
 
-      local
-         fun valOf x: Primitive.Int32.int = case x of SOME y => y | NONE => 0
-         fun doit (precision, fromInt, maxInt') = 
-            if Primitive.Int32.>= (valOf SeqIndex.precision, precision)
-               then fromInt maxInt'
-            else SeqIndex.maxInt'
-         structure S = 
-            Int_ChooseInt 
-            (type 'a t = SeqIndex.int
-             val fInt8 = doit (valOf Primitive.Int8.precision,
-                               SeqIndex.schckFromInt8,
-                               Primitive.Int8.maxInt')
-             val fInt16 = doit (valOf Primitive.Int16.precision,
-                                SeqIndex.schckFromInt16,
-                                Primitive.Int16.maxInt')
-             val fInt32 = doit (valOf Primitive.Int32.precision,
-                                SeqIndex.schckFromInt32,
-                                Primitive.Int32.maxInt')
-             val fInt64 = doit (valOf Primitive.Int64.precision,
-                                SeqIndex.schckFromInt64,
-                                Primitive.Int64.maxInt')
-             val fIntInf = SeqIndex.maxInt')
-      in 
-         val maxLen = S.f
-      end
+      val maxLen = SeqIndex.maxInt'
 
       fun length s = S.length s
 

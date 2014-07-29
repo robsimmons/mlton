@@ -30,7 +30,8 @@ structure Array: ARRAY_EXTRA =
             fun update x = updateMk Primitive.Array.updateUnsafe x
             fun copy arg = wrapCopy (Primitive.Array.Slice.copy) arg
             fun copyVec arg = wrapCopy (Primitive.Array.Slice.copyVec) arg
-            fun modifyi f sl = Primitive.Array.Slice.modifyi (wrap2 f) sl
+            fun modifyi f sl = 
+               (ignore (length sl); Primitive.Array.Slice.modifyi (wrap2 f) sl)
             val modify = Primitive.Array.Slice.modify
          end
 
@@ -41,7 +42,8 @@ structure Array: ARRAY_EXTRA =
       fun unsafeUpdate x = unsafeUpdateMk Primitive.Array.updateUnsafe x
       fun copy arg = wrapCopy (Primitive.Array.copy) arg
       fun copyVec arg = wrapCopy (Primitive.Array.copyVec) arg
-      fun modifyi f sl = Primitive.Array.modifyi (wrap2 f) sl
+      fun modifyi f sl = 
+         (ignore (length sl); Primitive.Array.modifyi (wrap2 f) sl)
       val modify = Primitive.Array.modify
    end
 

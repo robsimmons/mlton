@@ -35,16 +35,7 @@ in
 
    ../arrays-and-vectors/slice0.sig
    ../arrays-and-vectors/sequence0.sig
-   local
-      local
-         ../config/bind/int-prim.sml
-         ../config/bind/int-inf-prim.sml
-      in ann "forceUsed" in 
-         ../config/default/default-$(DEFAULT_INT).sml
-      end end
-   in
-      ../arrays-and-vectors/sequence0.sml
-   end
+   ../arrays-and-vectors/sequence0.sml
 
    ../integer/int-inf0.sml
    local
