@@ -48,6 +48,7 @@ in
 
    ../integer/int-inf0.sig
    ../integer/int-inf0.sml
+   ../integer/int-inf-alt.sml
    local
       local 
          ../config/bind/int-prim.sml 
