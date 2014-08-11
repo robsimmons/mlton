@@ -192,6 +192,42 @@ structure IntInfAlt =
 
       fun bigSub (i, j) = bigAdd (i, bigNeg j)
 
+      fun multVecs (v1, v2) =
+         let
+            val len1 = V.length v1 
+            val len2 = V.length v2
+            val {done, sub, update} = V.generate (len1 + len2)
+            val () = V.appi (fn (i, _) => update (i, 0wx0)) v2
+            fun addWithCarry (offset, multiplier) (i, digit, carry) = 
+               let
+                  val stored = smallWordToBigWord (sub (i + offset))
+                  val new = BigWord.* (multiplier, smallWordToBigWord digit)
+                  val result = BigWord.+ (carry, BigWord.+ (stored, new))
+               in
+                  update (i + offset, bigWordToSmallWordTrunc result);
+                  BigWord.>>? (result, smallPrecision)
+               end
+            fun multLoop (i, digit) =
+               let
+                  val action = addWithCarry (i, smallWordToBigWord digit)
+                  val carry = V.foldli action 0wx0 v2
+               in
+                  update (i + len2, bigWordToSmallWordCheck carry)
+               end
+         in
+            V.appi multLoop v1;
+            done ()
+         end
+
+      fun bigMult (i, j) = 
+         case (i, j) of
+            (Zero, _) => Zero
+          | (_, Zero) => Zero
+          | (Neg v1, Neg v2) => Pos (drop0s (multVecs (v1, v2)))
+          | (Pos v1, Pos v2) => Pos (drop0s (multVecs (v1, v2)))
+          | (Neg v1, Pos v2) => Neg (drop0s (multVecs (v1, v2)))
+          | (Pos v1, Neg v2) => Neg (drop0s (multVecs (v1, v2)))
+
       (* These should all actually be the identity! *)
       local 
          val base = BigWord.castToIntInf base
@@ -288,9 +324,9 @@ structure IntInfAlt =
       val op div = unimp
       val gcd = unimp
       val op mod = unimp
-      val op *! = unimp
-      val op *? = unimp
-      val op * = unimp 
+      val op *! = bigMult
+      val op *? = bigMult
+      val op * = bigMult
       val op ~! = bigNeg
       val op ~? = bigNeg
       val op ~ = bigNeg
