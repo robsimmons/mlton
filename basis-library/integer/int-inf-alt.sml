@@ -9,7 +9,7 @@ structure IntInfAlt =
       structure BigInt = Int16
       structure BigWord = Word16
 
-      val smallPrecision: Primitive.Word32.word = 0wx8
+      val smallPrecision = SmallWord.sizeInBitsWord
       val base: BigWord.word = BigWord.<<? (0wx1, smallPrecision)
       val smallWordToBigInt = SmallWord.zextdToInt16 
       val smallWordToBigWord = SmallWord.zextdToWord16 
@@ -228,6 +228,28 @@ structure IntInfAlt =
           | (Neg v1, Pos v2) => Neg (drop0s (multVecs (v1, v2)))
           | (Pos v1, Neg v2) => Neg (drop0s (multVecs (v1, v2)))
 
+      fun bigFromWord64 w = 
+         let
+            val num = Int32.div (Word64.sizeInBits, SmallWord.sizeInBits)
+            val numw = Word32.div (Word64.sizeInBitsWord, smallPrecision)
+            fun nthdigit i = 
+               let
+                  val offset = Word32.* (numw, SeqIndex.castToWord32 i)
+               in
+                  SmallWord.castFromWord64 (SmallWord.>>? (w, offset))
+               end
+         in
+            if w = 0wx0 
+               then Zero
+            else Pos (drop0s (V.tabulate (num, nthdigit)))
+         end
+
+      fun bigFromInt64 i =
+         case Int64.compare (i, 0) of
+            EQUAL => Zero
+          | GREATER => bigWord64 (Int64.castToWord64 i)
+          | LESS => bigNeg (bigWord64 (Word64.~ (Int64.castToWord64 i)))
+
       (* These should all actually be the identity! *)
       local 
          val base = BigWord.castToIntInf base
@@ -400,45 +422,45 @@ structure IntInfAlt =
       val schckToInt16 = unimp
       val schckToWord16 = unimp
 
-      val castFromInt32 = unimp
-      val castFromWord32 = unimp
+      val castFromInt32 = bigFromInt64 o Int64.castFromInt32
+      val castFromWord32 = bigFromInt64 o Int64.castFromWord32
       val castToInt32 = unimp
       val castToWord32 = unimp
-      val zextdFromInt32 = unimp
-      val zextdFromWord32 = unimp
+      val zextdFromInt32 = bigFromInt64 o Int64.zextdFromInt32
+      val zextdFromWord32 = bigFromInt64 o Int64.zextdFromWord32
       val zextdToInt32 = unimp
       val zextdToWord32 = unimp
-      val sextdFromInt32 = unimp
-      val sextdFromWord32 = unimp
+      val sextdFromInt32 = bigFromInt64 o Int64.sextdFromInt32
+      val sextdFromWord32 = bigFromInt64 o Int64.sextdFromWord32
       val sextdToInt32 = unimp
       val sextdToWord32 = unimp
-      val zchckFromInt32 = unimp
-      val zchckFromWord32 = unimp
+      val zchckFromInt32 = bigFromInt64 o Int64.zchckFromInt32
+      val zchckFromWord32 = bigFromInt64 o Int64.zchckFromWord32
       val zchckToInt32 = unimp
       val zchckToWord32 = unimp
-      val schckFromInt32 = unimp
-      val schckFromWord32 = unimp
+      val schckFromInt32 = bigFromInt64 o Int64.schckFromInt32
+      val schckFromWord32 = bigFromInt64 o Int64.schckFromWord32
       val schckToInt32 = unimp
       val schckToWord32 = unimp
 
-      val castFromInt64 = unimp
-      val castFromWord64 = unimp
+      val castFromInt64 = bigFromInt64
+      val castFromWord64 = bigFromWord64
       val castToInt64 = unimp
       val castToWord64 = unimp
-      val zextdFromInt64 = unimp
-      val zextdFromWord64 = unimp
+      val zextdFromInt64 = bigFromInt64
+      val zextdFromWord64 = bigFromWord64
       val zextdToInt64 = unimp
       val zextdToWord64 = unimp
-      val sextdFromInt64 = unimp
-      val sextdFromWord64 = unimp
+      val sextdFromInt64 = bigFromInt64
+      val sextdFromWord64 = bigFromWord64
       val sextdToInt64 = unimp
       val sextdToWord64 = unimp
-      val zchckFromInt64 = unimp
-      val zchckFromWord64 = unimp
+      val zchckFromInt64 = bigFromInt64
+      val zchckFromWord64 = bigFromWord64
       val zchckToInt64 = unimp
       val zchckToWord64 = unimp
-      val schckFromInt64 = unimp
-      val schckFromWord64 = unimp
+      val schckFromInt64 = bigFromInt64
+      val schckFromWord64 = bigFromWord64
       val schckToInt64 = unimp
       val schckToWord64 = unimp
   end
